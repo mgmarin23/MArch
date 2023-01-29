@@ -13,6 +13,8 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.Switch;
+
+import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
 
 
@@ -46,14 +48,13 @@ public class MainActivity extends AppCompatActivity {
     //Number[] Hist= {1,6,12,24};
 
 
-
     String Mean, Historic;
     ExecutorService es;
 
-    MQTTClient myMQTT;
+
     MqttAndroidClient mqttAndroidClient;
 
-    private MqttClient client;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,39 +97,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
          */
-
-
         //--------------------------------------------------------------------------------------------------------------
         mqttAndroidClient = new MqttAndroidClient(getApplicationContext(), "tcp://test.mosquitto.org:1883", "AndroidClient");
         MqttConnectOptions options = new MqttConnectOptions();
         options.setAutomaticReconnect(true);
         options.setCleanSession(true);
-        /*
-        try {
-            client.connect(options);
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-         */
-        /*
-        try {
-            client.publish("topic/rmario", "Hola".getBytes(StandardCharsets.UTF_8),0,false);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
-        try {
-            client.subscribe("topic/mario");
-            Snackbar.make(findViewById(R.id.bPublish), "Client connected and subscribed", 2000).show();
-        } catch (Exception e) {
-            e.printStackTrace();
-
-        }
-
-         */
 
         try {            // Conectar al servidor MQTT
             IMqttToken token = mqttAndroidClient.connect(options);
@@ -141,7 +115,6 @@ public class MainActivity extends AppCompatActivity {
                     disconnectedBufferOptions.setBufferSize(100);
                     disconnectedBufferOptions.setPersistBuffer(false);
                     disconnectedBufferOptions.setDeleteOldestMessages(false);
-
                     subscribeToTopic("topic/mario");
                     Snackbar.make(findViewById(R.id.bPublish), "Client connected and subscribed", 2000).show();// Inform the user
 
@@ -156,13 +129,13 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+
         es = Executors.newSingleThreadExecutor();
         MQTTSub task = new MQTTSub(handler, mqttAndroidClient);
         es.execute(task);
 
 
     }
-
 
 
     private void subscribeToTopic(String topic) {
@@ -180,8 +153,12 @@ public class MainActivity extends AppCompatActivity {
         //Then, the attributes (Temperature, Humidity and Light) of each item are updated.
         public void handleMessage(Message inputMessage) {
             this.obtainMessage();
+            if(!mqttAndroidClient.isConnected()) {
+                SendNotification("No connection");
+            } else
+                SendNotification("Connected");
 
-            Snackbar.make(findViewById(R.id.bPublish), "The msg is " + inputMessage.getData(), 2000).show();
+            //Snackbar.make(findViewById(R.id.bPublish), "The msg is " + inputMessage.getData(), 2000).show();
 
             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
             builder.setTitle("Water Alert");
@@ -190,23 +167,22 @@ public class MainActivity extends AppCompatActivity {
                     .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
-
-                            /*Tree.publishTopic = "topic/rMario"; // If there is at least 1 sensor active, the date will be published as a separated message
-
                             try {
-                                Tree.publishMessage("date");
+                                publishMessage("New Test OK");
                             } catch (MqttException e) {
                                 e.printStackTrace();
                             }
-
-                             */
-
                         }
                     })
                     .setNegativeButton("No", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
                             dialogInterface.cancel();
+                            try {
+                                publishMessage("New Test NOK");
+                            } catch (MqttException e) {
+                                e.printStackTrace();
+                            }
                         }
                     });
             AlertDialog alertDialog = builder.create();
@@ -214,9 +190,26 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-        };
+    };
+
+    public void SendNotification(String mainText) {
+
+        Snackbar.make(findViewById(R.id.bPublish),
+                mainText,
+                BaseTransientBottomBar.LENGTH_SHORT
+        ).show();
 
 
+    }
+    public void publishMessage(String measurement) throws MqttException {
 
+        MqttMessage message = new MqttMessage();
+        message.setPayload(measurement.getBytes());
+        mqttAndroidClient.publish("topic/rmario", message);
+        SendNotification("Message Published");
+        if (!mqttAndroidClient.isConnected()) {
+            SendNotification("Not connected");
+        }
+    }
 
 }

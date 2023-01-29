@@ -22,11 +22,11 @@ import java.util.Calendar;
 public class MQTTClient extends AppCompatActivity {
     final String serverUri = "tcp://test.mosquitto.org:1883";
     //final String serverUri = "tcp://172.20.10.3:1883";
-    String publishTopic = "topic";
+    String publishTopic = "topic/rmario";
     MqttAndroidClient mqttAndroidClient;
     String clientId = "Client_";
     Calendar calendar;
-    String subscriptionTopic = "topic";
+    String subscriptionTopic = "topic/mario";
     @SuppressLint("SimpleDateFormat")
     SimpleDateFormat dateFormat = new SimpleDateFormat("EEE d MMM HH:mm:ss");
     final String LWillmessage = "disconnected";
