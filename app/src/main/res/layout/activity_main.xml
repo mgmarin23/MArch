@@ -97,16 +97,17 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="310dp"
+            android:layout_height="375dp"
             android:orientation="horizontal">
 
             <ImageView
                 android:id="@+id/apple"
                 android:layout_width="260dp"
-                android:layout_height="294dp"
+                android:layout_height="258dp"
                 android:layout_marginBottom="20dp"
                 android:layout_weight="0"
                 app:srcCompat="@drawable/appletree" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -117,11 +118,11 @@
                     android:id="@+id/Automatic"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
                     android:layout_weight="0"
                     android:text="Automatic water"
-                    android:layout_marginEnd="10dp"
-                    android:textSize="25sp"
                     android:textAlignment="center"
+                    android:textSize="25sp"
                     android:textStyle="bold">
 
                 </TextView>
@@ -140,11 +141,25 @@
                 <ImageView
                     android:id="@+id/water"
                     android:layout_width="130dp"
-                    android:layout_height="138dp"
+                    android:layout_height="122dp"
                     android:layout_marginEnd="20dp"
                     android:layout_weight="0.2"
                     android:textAlignment="center"
                     app:srcCompat="@drawable/watertap" />
+
+                <Button
+                    android:id="@+id/bTank"
+                    android:layout_width="122dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:layout_weight="1"
+                    android:text="Tank"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Large"
+                    android:textSize="30sp"
+                    app:backgroundTint="@color/green" />
             </LinearLayout>
 
         </LinearLayout>
@@ -153,9 +168,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="50dp"
-            android:layout_marginTop="40dp"
+            android:layout_marginTop="20dp"
             android:layout_marginEnd="50dp"
-            android:layout_marginBottom="50dp"
+            android:layout_marginBottom="20dp"
             android:layout_weight="1"
             android:text="Publish"
             android:textAppearance="@style/TextAppearance.AppCompat.Large"
