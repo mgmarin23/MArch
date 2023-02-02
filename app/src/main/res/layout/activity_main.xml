@@ -21,6 +21,7 @@
             android:text="Apple Tree"
             android:textAlignment="center"
             android:textSize="25sp" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -28,18 +29,43 @@
 
             <TextView
                 android:id="@+id/mean"
-                android:layout_width="wrap_content"
+                android:layout_width="168dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="30dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="20dp"
+                android:layout_weight="1.2"
+                android:text="Update waterguideline"
+                android:textSize="25sp"
+                android:textStyle="bold"></TextView>
+
+            <TextView
+                android:id="@+id/Historical3"
+                android:layout_width="81dp"
+                android:layout_height="62dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginEnd="0dp"
+                android:layout_marginBottom="5dp"
+                android:layout_weight="0.7"
+                android:text="every"
+                android:textSize="20sp"
+                android:textStyle="bold"></TextView>
+
+            <!--
+            <com.google.android.material.slider.Slider
+                android:layout_marginStart="5dp"
                 android:layout_marginTop="30dp"
                 android:layout_marginEnd="30dp"
-                android:layout_marginBottom="30dp"
-                android:layout_weight="1.2"
-                android:text="Mean of sensors"
-                android:textSize="25sp"
-                android:textStyle="bold">
-            </TextView>
-
+                android:id="@+id/sl_wat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:valueTo="20.0"
+                android:valueFrom="0.0"
+                android:value="10.0"
+             />
+            -->
             <Spinner
                 android:id="@+id/sp_mean"
                 android:layout_width="wrap_content"
@@ -54,6 +80,7 @@
                 app:layout_constraintStart_toEndOf="@+id/textView8"
                 app:layout_constraintTop_toTopOf="parent" />
 
+
         </LinearLayout>
 
         <LinearLayout
@@ -63,15 +90,29 @@
 
             <TextView
                 android:id="@+id/Historical"
-                android:layout_width="169dp"
+                android:layout_width="wrap_content"
                 android:layout_height="62dp"
                 android:layout_marginStart="30dp"
                 android:layout_marginTop="10dp"
-                android:layout_marginEnd="30dp"
+                android:layout_marginEnd="5dp"
                 android:layout_marginBottom="20dp"
                 android:layout_weight="1.2"
-                android:text="Historical"
+                android:text="Update    Dashboard"
                 android:textSize="25sp"
+                android:textStyle="bold">
+            </TextView>
+
+            <TextView
+                android:id="@+id/Historical2"
+                android:layout_width="141dp"
+                android:layout_height="62dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="5dp"
+                android:layout_marginBottom="20dp"
+                android:layout_weight="0.7"
+                android:text="every"
+                android:textSize="20sp"
                 android:textStyle="bold">
 
             </TextView>
@@ -97,19 +138,38 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="375dp"
+            android:layout_height="wrap_content"
             android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
             <ImageView
                 android:id="@+id/apple"
                 android:layout_width="260dp"
-                android:layout_height="258dp"
-                android:layout_marginBottom="20dp"
+                android:layout_height="268dp"
+                android:layout_marginBottom="5dp"
+
                 android:layout_weight="0"
                 app:srcCompat="@drawable/appletree" />
 
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="222dp"
+                    android:layout_height="50dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="5dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/buttonAsync" />
+
+
+            </LinearLayout>
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:orientation="vertical">
 
@@ -141,7 +201,7 @@
                 <ImageView
                     android:id="@+id/water"
                     android:layout_width="130dp"
-                    android:layout_height="122dp"
+                    android:layout_height="94dp"
                     android:layout_marginEnd="20dp"
                     android:layout_weight="0.2"
                     android:textAlignment="center"
@@ -149,34 +209,35 @@
 
                 <Button
                     android:id="@+id/bTank"
-                    android:layout_width="122dp"
-                    android:layout_height="wrap_content"
+                    android:layout_width="119dp"
+                    android:layout_height="3dp"
                     android:layout_marginStart="10dp"
                     android:layout_marginTop="10dp"
                     android:layout_marginEnd="10dp"
                     android:layout_marginBottom="10dp"
                     android:layout_weight="1"
-                    android:text="Tank"
+                    android:text="Stop"
                     android:textAppearance="@style/TextAppearance.AppCompat.Large"
                     android:textSize="30sp"
-                    app:backgroundTint="@color/green" />
+                    app:backgroundTint="#58C3BE" />
             </LinearLayout>
 
         </LinearLayout>
+
         <Button
             android:id="@+id/bPublish"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="10dp"
             android:layout_marginStart="50dp"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="10dp"
             android:layout_marginEnd="50dp"
             android:layout_marginBottom="20dp"
             android:layout_weight="1"
-            android:text="Publish"
+
+            android:text="Update Data"
             android:textAppearance="@style/TextAppearance.AppCompat.Large"
             android:textSize="30sp"
-            app:backgroundTint="#4CAF50"
-            />
+            app:backgroundTint="#4CAF50" />
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

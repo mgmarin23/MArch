@@ -11,14 +11,18 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Switch;
 
 import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
@@ -33,6 +37,7 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
@@ -41,12 +46,14 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import okhttp3.Callback;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -58,14 +65,17 @@ public class MainActivity extends AppCompatActivity {
     Button bPublish;
     Number[] MeanS = {1, 6, 12, 24};
     //Number[] Hist= {1,6,12,24};
+    Gson gson = new Gson();
+
 
     boolean WautIsActive;
 
-    String Mean, Historic;
+    int Mean, Historic;
     ExecutorService es;
 
-
+    ProgressBar progressBar;
     MqttAndroidClient mqttAndroidClient;
+    Handler handler_pb;
 
 
 
@@ -77,18 +87,28 @@ public class MainActivity extends AppCompatActivity {
         Mean_sensor = findViewById(R.id.sp_mean);
         Historical = findViewById(R.id.sp_hist);
         boolean WaterAutoIsActive;
+        progressBar = findViewById(R.id.progressBar);
+
+        //progress bar
+
+        es = Executors.newSingleThreadExecutor();
 
 
-
-
-
+        handler_pb = new Handler(Looper.getMainLooper()) {
+            @Override
+            public void handleMessage(Message inputMessage) {
+                int i = inputMessage.getData().getInt("progress", -1);
+                //Log.d(logTag, "Message Received with progress = " + i);
+                progressBar.setProgress(i);
+            }
+        };
         // Adapter to adapt the data from array to Spinner
         ArrayAdapter adapter = new ArrayAdapter(MainActivity.this,
-                android.R.layout.simple_spinner_item, MeanS);
+                R.layout.spinner_view, MeanS);
         Mean_sensor.setAdapter(adapter);
 
         ArrayAdapter adapter2 = new ArrayAdapter(MainActivity.this,
-                android.R.layout.simple_spinner_item, MeanS);
+               R.layout.spinner_view, MeanS);
         Historical.setAdapter(adapter2);
 
         //--------------------------------------------------------------------------------------------------------------
@@ -165,16 +185,37 @@ public class MainActivity extends AppCompatActivity {
         //Then, the attributes (Temperature, Humidity and Light) of each item are updated.
         public void handleMessage(Message inputMessage) {
             this.obtainMessage();
+
             if(!mqttAndroidClient.isConnected()) {
+
                 SendNotification("No connection");
             } else {
                 SendNotification("Connected");
             }
-            //Snackbar.make(findViewById(R.id.bPublish), "The msg is " + inputMessage.getData(), 2000).show();
+
+
+            String recfile = inputMessage.getData().getString("topic/mario");
+            DataConf Datarec = gson.fromJson(recfile, DataConf.class);
+            int number = Datarec.getW_min();
+            int water = Datarec.getOpen_P();
+
+            DataSend Datasend = new DataSend("Start",Datarec.getOpen_P(),Datarec.getW_min());
+            String datas = gson.toJson(Datasend);
+            /*
+            recfile = recfile.substring(1, recfile.length() - 1);
+            String number = recfile.substring(recfile.length() - 3 ,recfile.length() - 0 );
+            int n = Integer.parseInt(number);
+            String sendfile;
+            sendfile = " { " + "Confirmation: Start, " + recfile + " } ";
+            //Snackbar.make(findViewById(R.id.bPublish), "The msg is " + inputMessage.getData().getString("topic/mario"), 5000).show();
+            Snackbar.make(findViewById(R.id.bPublish), number, 5000).show();
+
+             */
+            Snackbar.make(findViewById(R.id.bPublish), recfile, 5000).show();
 
             if(WautIsActive){
                 try {
-                    publishMessage("New Test OK Automatically");
+                    publishMessage( datas );
                 } catch (MqttException e) {
                     e.printStackTrace();
                 }
@@ -189,10 +230,15 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
                                 try {
-                                    publishMessage("New Test OK");
+                                    publishMessage(datas);
+
+                                    progressBar.setMax(number);
+                                    LengthyTask task = new LengthyTask(handler_pb, number);
+                                    es.execute(task);
                                 } catch (MqttException e) {
                                     e.printStackTrace();
                                 }
+
                             }
                         })
                         .setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -256,21 +302,41 @@ public class MainActivity extends AppCompatActivity {
 
     });
 */
-    /*
-    public class ServiceGenerator{
-        private  static final String BASE_URI = "https://srv_iot.diatel.upm.es/api/";
-        private static Retrofit.Builder builder = new Retrofit.Builder()
-                .baseUrl("")
-                .client(new OkHttpClient.Builder().addInterceptor((
-                        new HttpLoggingInterceptor()).setLevel(HttpLoggingInterceptor.Level.BODY)).build())
-                .addConverterFactory(GsonConverterFactory.create());
 
-        public static <S> S createService(Class <S> serviceClass) {
-            Retrofit adapter = builder.build();
-            return adapter.create(serviceClass);
-        }
+    public void send_HTTP(View view){
+        ThingsboardService tbs = ServiceGenerator.createService(ThingsboardService.class);
+        int db = 2;
+        int tank = 9;
+        JsonObject msg = new JsonObject();
 
+        msg.addProperty("db", Integer.toString(db));
+        msg.addProperty("tank", Integer.toString(tank));
+
+        //String usr_token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJtLmdtYXJpbkBhbHVtbm9zLnVwbS5lcyIsInNjb3BlcyI6WyJURU5BTlRfQURNSU4iXSwidXNlcklkIjoiZDM2ZGUxZDAtODA1Ni0xMWVkLThkMmItMDczZGU0ZTE0OTA3IiwiZW5hYmxlZCI6dHJ1ZSwiaXNQdWJsaWMiOmZhbHNlLCJ0ZW5hbnRJZCI6IjllMjQ1NGIwLTgwNTUtMTFlZC04ZDJiLTA3M2RlNGUxNDkwNyIsImN1c3RvbWVySWQiOiIxMzgxNDAwMC0xZGQyLTExYjItODA4MC04MDgwODA4MDgwODAiLCJpc3MiOiJ0aGluZ3Nib2FyZC5pbyIsImlhdCI6MTY3NTE5MjcyNCwiZXhwIjoxNjc1MjAxNzI0fQ.YbtY2bIGQXqCn4_lIX_21vdwJKj1_z6NskZiakn8qgfkXe6hCKls5Y7OLncFbFETzuk3Lq9IdkZe8ud0T5FC8A",
+
+
+        Call<JsonObject> resp = tbs.getUserToken(msg);
+        resp.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                if(response.code() == 200){
+                    try {
+                        JSONObject jsonObject = new JSONObject(response.body().toString());
+                        Log.d("RESPONSE::", "Starting activity with token..." +jsonObject.getString("token"));
+                    } catch (Exception e){
+                        e.printStackTrace();
+                    }
+                } else Log.d("RESPONSE:: ERROR", String.valueOf(response.code()));
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                Log.d("RESPONSE:: ERROR", "NOT WORKING");
+            }
+        });
     }
 
-     */
+
+
+
 }

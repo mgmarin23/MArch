@@ -1,5 +1,7 @@
 package dte.mgmprojects.march;
 
+import com.google.gson.JsonObject;
+
 import org.json.JSONObject;
 
 import retrofit2.Call;
@@ -13,18 +15,18 @@ import retrofit2.http.Path;
 public interface ThingsboardService {
     @Headers ({"Accept application/json", "Content-Type: application/json"})
     @POST ("auth/login")
-    Call<JSONObject> getUserToken (@Body JSONObject user);
+    Call<JsonObject> getUserToken (@Body JsonObject user);
 
     @Headers({"Accept application/json"})
-    @GET("auth/login")
-    Call<JSONObject> getLastestTel (@Header("X-Authorization")String token, @Path("device_id") String device_id);
+    @GET("plugins/telemetry/DEVICE/bf185470-9da9-11ed-8d2b-073de4e14907/values/timeseries?keys=db,tank")
+    Call<JsonObject> getLastestTel (@Header("X-Authorization")String token, @Path("device_id") String device_id);
 
     @Headers ({"Accept text/plain", "Content-Type: application/json"})
-    @POST("v1/{device_access_token}/telemetry")
-    Call<Void> sendTel (@Body JSONObject tele, @Path ("device_access_token") String device_access_token);
+    @POST("v1/6xSlEailzRAtTYRD4eEh/telemetry")
+    Call<Void> sendTel (@Body JsonObject tele, @Path ("device_access_token") String device_access_token);
 
     @Headers ({"Accept application/json"})
-    @GET ("v1/{device_access_token}/attributes?sharedKeys=mode")
-    Call<JSONObject> getMode ( @Path ("device_access_token") String device_access_token);
+    @GET ("v1/6xSlEailzRAtTYRD4eEh/attributes?sharedKeys=mode")
+    Call<JsonObject> getMode ( @Path ("device_access_token") String device_access_token);
 
 }
