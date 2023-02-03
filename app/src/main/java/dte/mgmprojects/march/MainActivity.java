@@ -75,8 +75,9 @@ public class MainActivity extends AppCompatActivity {
 
     ProgressBar progressBar;
     MqttAndroidClient mqttAndroidClient;
+    //MqttAndroidClient pubClient;
     Handler handler_pb;
-
+    ThingsboardService tbs;
 
 
     @Override
@@ -85,11 +86,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         bPublish = findViewById(R.id.bPublish);
         Mean_sensor = findViewById(R.id.sp_mean);
+
+        //String mean = Mean_sensor.getSelectedItem().toString();
         Historical = findViewById(R.id.sp_hist);
         boolean WaterAutoIsActive;
         progressBar = findViewById(R.id.progressBar);
 
-        //progress bar
+        tbs = ServiceGenerator.createService(ThingsboardService.class);
 
         es = Executors.newSingleThreadExecutor();
 
@@ -129,20 +132,21 @@ public class MainActivity extends AppCompatActivity {
                     disconnectedBufferOptions.setBufferSize(100);
                     disconnectedBufferOptions.setPersistBuffer(false);
                     disconnectedBufferOptions.setDeleteOldestMessages(false);
-                    subscribeToTopic("topic/mario");
+                    subscribeToTopic("topic/arcs");
                     Snackbar.make(findViewById(R.id.bPublish), "Client connected and subscribed", 2000).show();// Inform the user
 
                 }
 
                 @Override
                 public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    Snackbar.make(findViewById(R.id.bPublish), "NOO connected and subscribed", 2000).show();// Inform the user
+
                     // Error al conectar
                 }
             });
         } catch (MqttException e) {
             e.printStackTrace();
         }
-
 
         es = Executors.newSingleThreadExecutor();
         MQTTSub task = new MQTTSub(handler, mqttAndroidClient);
@@ -166,6 +170,15 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        /*
+        bPublish.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                send_HTTP(view);
+            }
+        });
+
+         */
     }
 
 
@@ -194,13 +207,12 @@ public class MainActivity extends AppCompatActivity {
             }
 
 
-            String recfile = inputMessage.getData().getString("topic/mario");
+            String recfile = inputMessage.getData().getString("topic/arcs");
             DataConf Datarec = gson.fromJson(recfile, DataConf.class);
             int number = Datarec.getW_min();
             int water = Datarec.getOpen_P();
 
-            DataSend Datasend = new DataSend("Start",Datarec.getOpen_P(),Datarec.getW_min());
-            String datas = gson.toJson(Datasend);
+
             /*
             recfile = recfile.substring(1, recfile.length() - 1);
             String number = recfile.substring(recfile.length() - 3 ,recfile.length() - 0 );
@@ -215,7 +227,9 @@ public class MainActivity extends AppCompatActivity {
 
             if(WautIsActive){
                 try {
-                    publishMessage( datas );
+                    DataSend Datasend = new DataSend("Start",Datarec.getOpen_P(),Datarec.getW_min());
+                    String datas = gson.toJson(Datasend);
+                    publishMessage("topic/rarc", datas );
                 } catch (MqttException e) {
                     e.printStackTrace();
                 }
@@ -230,7 +244,9 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
                                 try {
-                                    publishMessage(datas);
+                                    DataSend Datasend = new DataSend("Start",Datarec.getOpen_P(),Datarec.getW_min());
+                                    String datas = gson.toJson(Datasend);
+                                    publishMessage("topic/rarc",datas);
 
                                     progressBar.setMax(number);
                                     LengthyTask task = new LengthyTask(handler_pb, number);
@@ -246,7 +262,9 @@ public class MainActivity extends AppCompatActivity {
                             public void onClick(DialogInterface dialogInterface, int i) {
                                 dialogInterface.cancel();
                                 try {
-                                    publishMessage("New Test NOK");
+                                    DataSend Datasend = new DataSend("Stop",0,0);
+                                    String datas = gson.toJson(Datasend);
+                                    publishMessage("topic/rarc", datas);
                                 } catch (MqttException e) {
                                     e.printStackTrace();
                                 }
@@ -268,11 +286,11 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-    public void publishMessage(String measurement) throws MqttException {
+    public void publishMessage(String topic , String measurement) throws MqttException {
 
         MqttMessage message = new MqttMessage();
         message.setPayload(measurement.getBytes());
-        mqttAndroidClient.publish("topic/rmario", message);
+        mqttAndroidClient.publish(topic, message);
         SendNotification("Message Published");
         if (!mqttAndroidClient.isConnected()) {
             SendNotification("Not connected");
@@ -304,24 +322,26 @@ public class MainActivity extends AppCompatActivity {
 */
 
     public void send_HTTP(View view){
-        ThingsboardService tbs = ServiceGenerator.createService(ThingsboardService.class);
-        int db = 2;
-        int tank = 9;
-        JsonObject msg = new JsonObject();
 
-        msg.addProperty("db", Integer.toString(db));
-        msg.addProperty("tank", Integer.toString(tank));
+
+        JsonObject usr = new JsonObject();
+
+        usr.addProperty("username", "m.gmarin@alumnos.upm.es");
+        usr.addProperty("password", "THINGS_22_board");
+
+
 
         //String usr_token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJtLmdtYXJpbkBhbHVtbm9zLnVwbS5lcyIsInNjb3BlcyI6WyJURU5BTlRfQURNSU4iXSwidXNlcklkIjoiZDM2ZGUxZDAtODA1Ni0xMWVkLThkMmItMDczZGU0ZTE0OTA3IiwiZW5hYmxlZCI6dHJ1ZSwiaXNQdWJsaWMiOmZhbHNlLCJ0ZW5hbnRJZCI6IjllMjQ1NGIwLTgwNTUtMTFlZC04ZDJiLTA3M2RlNGUxNDkwNyIsImN1c3RvbWVySWQiOiIxMzgxNDAwMC0xZGQyLTExYjItODA4MC04MDgwODA4MDgwODAiLCJpc3MiOiJ0aGluZ3Nib2FyZC5pbyIsImlhdCI6MTY3NTE5MjcyNCwiZXhwIjoxNjc1MjAxNzI0fQ.YbtY2bIGQXqCn4_lIX_21vdwJKj1_z6NskZiakn8qgfkXe6hCKls5Y7OLncFbFETzuk3Lq9IdkZe8ud0T5FC8A",
-
-
-        Call<JsonObject> resp = tbs.getUserToken(msg);
-        resp.enqueue(new Callback<JsonObject>() {
+        final String[] token = new String[1];
+        Call<JsonObject> user = tbs.getUserToken(usr);
+        user.enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                 if(response.code() == 200){
                     try {
                         JSONObject jsonObject = new JSONObject(response.body().toString());
+                        metodo("Bearer " + jsonObject.getString("token"));
+
                         Log.d("RESPONSE::", "Starting activity with token..." +jsonObject.getString("token"));
                     } catch (Exception e){
                         e.printStackTrace();
@@ -334,8 +354,39 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("RESPONSE:: ERROR", "NOT WORKING");
             }
         });
+
+
+
     }
 
+    public void metodo(String token){
+        JsonObject msg = new JsonObject();
+
+        int db = 2;
+        int tank = 9;
+
+        msg.addProperty("db", Integer.toString(db));
+        msg.addProperty("tank", Integer.toString(tank));
+
+        Call<Void> resp = tbs.send(token,msg);
+        resp.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if(response.code() == 200){
+                    try {
+                        Log.d("RESPONSE::", "Starting activity with token..." );
+                    } catch (Exception e){
+                        e.printStackTrace();
+                    }
+                } else Log.d("RESPONSE:: ERROR", String.valueOf(response.code()));
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Log.d("RESPONSE:: ERROR", "NOT WORKING");
+            }
+        });
+    }
 
 
 

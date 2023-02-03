@@ -8,9 +8,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ServiceGenerator {
 
 
-        private  static final String BASE_URI = "https://srv_iot.diatel.upm.es/api/";
+        private  static final String BASE_URI = "https://srv-iot.diatel.upm.es/api/";
         private static retrofit2.Retrofit.Builder builder = new retrofit2.Retrofit.Builder()
-                .baseUrl("")
+                .baseUrl(BASE_URI)
                 .client(new OkHttpClient.Builder().addInterceptor((
                         new HttpLoggingInterceptor()).setLevel(HttpLoggingInterceptor.Level.BODY)).build())
                 .addConverterFactory(GsonConverterFactory.create());
