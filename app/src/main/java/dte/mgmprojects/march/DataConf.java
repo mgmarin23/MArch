@@ -1,8 +1,17 @@
 package dte.mgmprojects.march;
 
 public class DataConf {
+    private int Alarm;
     private int Open_P;
     private int W_min;
+
+    public int getAlarm() {
+        return Alarm;
+    }
+
+    public void setAlarm(int alarm) {
+        Alarm = alarm;
+    }
 
     public int getOpen_P() {
         return Open_P;

@@ -63,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
     Spinner Mean_sensor, Historical;
     Switch W_aut;
     Button bPublish;
+    Button Stop;
     Number[] MeanS = {1, 6, 12, 24};
     //Number[] Hist= {1,6,12,24};
     Gson gson = new Gson();
@@ -86,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         bPublish = findViewById(R.id.bPublish);
         Mean_sensor = findViewById(R.id.sp_mean);
-
+        Stop = findViewById(R.id.bTank);
         //String mean = Mean_sensor.getSelectedItem().toString();
         Historical = findViewById(R.id.sp_hist);
         boolean WaterAutoIsActive;
@@ -113,6 +114,17 @@ public class MainActivity extends AppCompatActivity {
         ArrayAdapter adapter2 = new ArrayAdapter(MainActivity.this,
                R.layout.spinner_view, MeanS);
         Historical.setAdapter(adapter2);
+        //---------
+        /*Stop.setOnClickListener(View MainActivity.this){
+            public void Stop(){
+        DataSend Datasend = new DataSend("Stop", 0, 0);
+        String datas = gson.toJson(Datasend);
+        publishMessage("topic/rarc", datas);
+        }
+        }
+        */
+
+
 
         //--------------------------------------------------------------------------------------------------------------
         mqttAndroidClient = new MqttAndroidClient(getApplicationContext(), "tcp://test.mosquitto.org:1883", "AndroidClient");
@@ -170,15 +182,27 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-        /*
-        bPublish.setOnClickListener(new View.OnClickListener() {
+
+        Stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                send_HTTP(view);
+                SendNotification("Stop Tank");
+                try {
+                    publishMessage("topic/rarc", "Hello");
+                    progressBar.setMax(15);
+                    LengthyTask task = new LengthyTask(handler_pb, 0);
+                    es.execute(task);
+                }
+                catch (MqttException e) {
+                    e.printStackTrace();
+                }
+
+
             }
         });
 
-         */
+
+
     }
 
 
@@ -188,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (MqttException e) {
             e.printStackTrace();
         }
-        //}}
+
     }
 
 
@@ -209,69 +233,63 @@ public class MainActivity extends AppCompatActivity {
 
             String recfile = inputMessage.getData().getString("topic/arcs");
             DataConf Datarec = gson.fromJson(recfile, DataConf.class);
+            //int Alarm =  1;
+            int Alarm = Datarec.getAlarm();
             int number = Datarec.getW_min();
             int water = Datarec.getOpen_P();
 
 
-            /*
-            recfile = recfile.substring(1, recfile.length() - 1);
-            String number = recfile.substring(recfile.length() - 3 ,recfile.length() - 0 );
-            int n = Integer.parseInt(number);
-            String sendfile;
-            sendfile = " { " + "Confirmation: Start, " + recfile + " } ";
-            //Snackbar.make(findViewById(R.id.bPublish), "The msg is " + inputMessage.getData().getString("topic/mario"), 5000).show();
-            Snackbar.make(findViewById(R.id.bPublish), number, 5000).show();
-
-             */
             Snackbar.make(findViewById(R.id.bPublish), recfile, 5000).show();
+            if (Alarm == 0){
+                AlertDialog.Builder builder1 = new AlertDialog.Builder(MainActivity.this);
+                builder1.setTitle("Water Alert");
+                builder1.setMessage("There is no need to water tree right now");
+                AlertDialog alertDialog = builder1.create();
+                alertDialog.show();
 
-            if(WautIsActive){
-                try {
-                    DataSend Datasend = new DataSend("Start",Datarec.getOpen_P(),Datarec.getW_min());
-                    String datas = gson.toJson(Datasend);
-                    publishMessage("topic/rarc", datas );
-                } catch (MqttException e) {
-                    e.printStackTrace();
-                }
             }
             else {
+                if (WautIsActive) {
+                    try {
+                        DataSend Datasend = new DataSend("Start", Datarec.getOpen_P(), Datarec.getW_min());
+                        String datas = gson.toJson(Datasend);
+                        publishMessage("topic/rarc", datas);
+                    } catch (MqttException e) {
+                        e.printStackTrace();
+                    }
+                } else {
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                builder.setTitle("Water Alert");
-                builder.setMessage("The conditions are... Do you want to water?")
-                        .setCancelable(false)
-                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                try {
-                                    DataSend Datasend = new DataSend("Start",Datarec.getOpen_P(),Datarec.getW_min());
-                                    String datas = gson.toJson(Datasend);
-                                    publishMessage("topic/rarc",datas);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setTitle("Water Alert");
+                    builder.setMessage("New Water guideline: " + number + "min and " + water + "%")
+                            .setCancelable(false)
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    try {
+                                        DataSend Datasend = new DataSend("Start", Datarec.getOpen_P(), Datarec.getW_min());
+                                        String datas = gson.toJson(Datasend);
+                                        publishMessage("topic/rarc", datas);
 
-                                    progressBar.setMax(number);
-                                    LengthyTask task = new LengthyTask(handler_pb, number);
-                                    es.execute(task);
-                                } catch (MqttException e) {
-                                    e.printStackTrace();
+                                        progressBar.setMax(number);
+                                        LengthyTask task = new LengthyTask(handler_pb, number);
+                                        es.execute(task);
+                                    } catch (MqttException e) {
+                                        e.printStackTrace();
+                                    }
+
                                 }
+                            })
+                            .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    dialogInterface.cancel();
 
-                            }
-                        })
-                        .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                dialogInterface.cancel();
-                                try {
-                                    DataSend Datasend = new DataSend("Stop",0,0);
-                                    String datas = gson.toJson(Datasend);
-                                    publishMessage("topic/rarc", datas);
-                                } catch (MqttException e) {
-                                    e.printStackTrace();
                                 }
-                            }
-                        });
-                AlertDialog alertDialog = builder.create();
-                alertDialog.show();
+                            });
+                    AlertDialog alertDialog = builder.create();
+                    alertDialog.show();
+                }
             }
         }
 
