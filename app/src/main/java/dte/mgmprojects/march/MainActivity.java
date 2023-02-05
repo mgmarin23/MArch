@@ -13,6 +13,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -40,8 +41,10 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -64,14 +67,18 @@ public class MainActivity extends AppCompatActivity {
     Switch W_aut;
     Button bPublish;
     Button Stop;
-    Number[] MeanS = {1, 6, 12, 24};
-    //Number[] Hist= {1,6,12,24};
+    //List<Integer> MeanS = new ArrayList<>();
+
+
+    //{1, 6, 12, 24};
+    Number[] MeanS= {1,6,12,24};
+    Number[] Hist= {1,6,12,24};
     Gson gson = new Gson();
 
 
     boolean WautIsActive;
 
-    int Mean, Historic;
+    int mean, historic;
     ExecutorService es;
 
     ProgressBar progressBar;
@@ -107,13 +114,42 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         // Adapter to adapt the data from array to Spinner
+
         ArrayAdapter adapter = new ArrayAdapter(MainActivity.this,
                 R.layout.spinner_view, MeanS);
         Mean_sensor.setAdapter(adapter);
 
+        //int mean;
+        Mean_sensor.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                mean = (int) MeanS[i];
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
+        //Snackbar.make(findViewById(R.id.bPublish), mean , 2000).show();// Inform the user
+
+
         ArrayAdapter adapter2 = new ArrayAdapter(MainActivity.this,
-               R.layout.spinner_view, MeanS);
+               R.layout.spinner_view, Hist);
         Historical.setAdapter(adapter2);
+
+        Historical.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                historic = (int) Hist[i];
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
         //---------
         /*Stop.setOnClickListener(View MainActivity.this){
             public void Stop(){
@@ -197,6 +233,15 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
 
+
+            }
+        });
+
+        bPublish.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                SendNotification("Send data");
+                send_HTTP(view, mean,historic);
 
             }
         });
@@ -339,7 +384,7 @@ public class MainActivity extends AppCompatActivity {
     });
 */
 
-    public void send_HTTP(View view){
+    public void send_HTTP(View view, int db, int tank){
 
 
         JsonObject usr = new JsonObject();
@@ -358,7 +403,7 @@ public class MainActivity extends AppCompatActivity {
                 if(response.code() == 200){
                     try {
                         JSONObject jsonObject = new JSONObject(response.body().toString());
-                        metodo("Bearer " + jsonObject.getString("token"));
+                        metodo("Bearer " + jsonObject.getString("token"),db,tank);
 
                         Log.d("RESPONSE::", "Starting activity with token..." +jsonObject.getString("token"));
                     } catch (Exception e){
@@ -377,11 +422,11 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void metodo(String token){
+    public void metodo(String token, int db, int tank){
         JsonObject msg = new JsonObject();
 
-        int db = 2;
-        int tank = 9;
+        //int db = 4;
+        //int tank = 10;
 
         msg.addProperty("db", Integer.toString(db));
         msg.addProperty("tank", Integer.toString(tank));
