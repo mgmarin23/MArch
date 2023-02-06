@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     //{1, 6, 12, 24};
-    Number[] MeanS= {1,6,12,24};
+    Number[] MeanS= {1,2,6,8};
     Number[] Hist= {1,6,12,24};
     Gson gson = new Gson();
 
@@ -224,10 +224,12 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 SendNotification("Stop Tank");
                 try {
-                    publishMessage("topic/rarc", "Hello");
-                    progressBar.setMax(15);
-                    LengthyTask task = new LengthyTask(handler_pb, 0);
-                    es.execute(task);
+                    DataSend Datasend = new DataSend("Stop", 0, 0);
+                    String datas = gson.toJson(Datasend);
+                    publishMessage("topic/rarc", datas);
+                    progressBar.setMax(0);
+                    //LengthyTask task = new LengthyTask(handler_pb, 0);
+                    //es.execute(task);
                 }
                 catch (MqttException e) {
                     e.printStackTrace();
@@ -240,8 +242,8 @@ public class MainActivity extends AppCompatActivity {
         bPublish.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                SendNotification("Send data");
-                send_HTTP(view, mean,historic);
+                SendNotification("Update data");
+                send_HTTP(view, historic,mean);
 
             }
         });
@@ -299,6 +301,10 @@ public class MainActivity extends AppCompatActivity {
                         DataSend Datasend = new DataSend("Start", Datarec.getOpen_P(), Datarec.getW_min());
                         String datas = gson.toJson(Datasend);
                         publishMessage("topic/rarc", datas);
+
+                        progressBar.setMax(number);
+                        LengthyTask task = new LengthyTask(handler_pb, number);
+                        es.execute(task);
                     } catch (MqttException e) {
                         e.printStackTrace();
                     }
